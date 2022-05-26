@@ -12,7 +12,6 @@ from queue import Queue
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from netmiko import ConnectHandler as ch
 
-# STFU about insecurity
 # not needed if your ssl is truly valid from the machine running the script
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -89,13 +88,14 @@ def polldevice(i, q):
                 failures.append(dev)
                 with lock:
                     print("Timeout connecting to {dev['sysName']} Count: {len(failures)}")
-                logging.warning("Timeout connection to device: %s, Count: %s", dev['sysName'], len(failures))
+                    logging.warning("Timeout connection to device: %s, Count: %s", dev['sysName'], len(failures))
                 q.task_done()
+                os.kill(os.getpid(), signal.SIGUSR1)
             except NetMikoAuthenticationException:
                 failures.append(dev)
                 with lock:
                     print("\n{}: ERROR: Authentication failed for {}. Stopping script. \n".format(i, dev['hostname']))
-                logging.warning("Authentcation error on device: %s, Count: %s", dev['sysName'], len(failures))
+                    logging.warning("Authentcation error on device: %s, Count: %s", dev['sysName'], len(failures))
                 q.task_done()
                 os.kill(os.getpid(), signal.SIGUSR1)
 
